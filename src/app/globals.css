@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent-green: #22c55e;
+  --color-accent-red: #ff3300;
+}
+
+:root {
+  /* Default Dark Mode */
+  --bg-primary: #0a0a0a;
+  --text-primary: #f0f0f0;
+  --text-secondary: #888888;
+  --text-meta: #555555;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+}
+
+.light {
+  --bg-primary: #f4f4f0; /* Warm paper white */
+  --text-primary: #0a0a0a;
+  --text-secondary: #555555;
+  --text-meta: #888888;
+  --border-subtle: rgba(0, 0, 0, 0.05);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 1.2s cubic-bezier(0.77, 0, 0.175, 1), color 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 0px; 
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.text-accent-muted {
+  color: var(--text-secondary);
+}

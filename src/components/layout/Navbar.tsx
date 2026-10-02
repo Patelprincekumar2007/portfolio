@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 import { useApp } from "@/context/AppContext";
 
 const NAV_LINKS = [
-  { id: "01", name: "WORK", path: "/#work" },
-  { id: "02", name: "ABOUT", path: "/#about" },
-  { id: "03", name: "JOURNEY", path: "/#journey" },
+  { id: "01", name: "WORK", path: "/projects" },
+  { id: "02", name: "ABOUT", path: "/about" },
+  { id: "03", name: "JOURNEY", path: "/journey" },
   { id: "04", name: "LAB", path: "/data-lab" },
-  { id: "05", name: "CONTACT", path: "/#contact" },
+  { id: "05", name: "CONTACT", path: "/contact" },
 ];
 
 export default function Navbar() {

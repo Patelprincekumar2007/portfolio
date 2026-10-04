@@ -4,6 +4,12 @@ import Link from "next/link";
 import { projects } from "@/data/projects";
 import { ArrowLeft, Code, ExternalLink } from "lucide-react";
 
+export function generateStaticParams() {
+  return projects.map((project) => ({
+    slug: project.id,
+  }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = await params;
   const project = projects.find((p) => p.id === resolvedParams.slug);

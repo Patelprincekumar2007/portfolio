@@ -2,11 +2,11 @@ import React from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { projects } from "@/data/projects";
-import { ArrowLeft, Code, ExternalLink } from "lucide-react";
+import { ArrowLeft, Code, ExternalLink, Cpu, CheckCircle2, FileText, Layers, Award } from "lucide-react";
 
-export function generateStaticParams() {
-  return projects.map((project) => ({
-    slug: project.id,
+export async function generateStaticParams() {
+  return projects.map((p) => ({
+    slug: p.id,
   }));
 }
 
@@ -29,20 +29,30 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <div className="flex-1 pt-32 pb-20 px-6 md:px-12 max-w-4xl mx-auto w-full">
-      <Link href="/projects" className="inline-flex items-center text-sm text-gray-400 hover:text-white transition-colors mb-12 group">
-        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-        Back to Work
+    <div className="flex-1 pt-32 pb-24 px-6 md:px-12 max-w-5xl mx-auto w-full">
+      <Link 
+        href="/projects" 
+        className="inline-flex items-center text-xs font-mono tracking-widest uppercase text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors mb-12 group"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1.5 transition-transform" />
+        Back to All Projects
       </Link>
 
       <div className="mb-12">
-        <span className="text-xs font-medium tracking-widest uppercase text-accent-muted mb-4 block">
-          {project.category} · {project.year}
-        </span>
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <span className="text-xs font-mono tracking-widest uppercase px-3 py-1 bg-[var(--card-bg)] border border-[var(--border-subtle)] rounded text-[var(--text-meta)]">
+            {project.category}
+          </span>
+          <span className="text-xs font-mono tracking-widest uppercase text-[var(--text-meta)]">
+            YEAR {project.year}
+          </span>
+        </div>
+
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-[var(--text-primary)]">
           {project.title}
         </h1>
-        <p className="text-xl text-gray-300 font-light leading-relaxed mb-8">
+        
+        <p className="text-lg md:text-xl text-[var(--text-secondary)] font-light leading-relaxed mb-8 max-w-3xl">
           {project.shortDescription}
         </p>
 
@@ -52,10 +62,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               href={project.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-6 py-3 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] text-white text-sm font-medium rounded-sm hover:bg-[rgba(255,255,255,0.1)] transition-colors"
+              className="inline-flex items-center px-6 py-3 bg-[var(--pill-bg)] text-[var(--pill-text)] text-xs font-mono font-bold tracking-widest uppercase rounded hover:opacity-90 transition-opacity"
             >
               <Code className="w-4 h-4 mr-2" />
-              View Repository
+              View Source Repository
             </a>
           )}
           {project.liveUrl && (
@@ -63,53 +73,86 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               href={project.liveUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-6 py-3 bg-white text-black text-sm font-medium rounded-sm hover:bg-gray-200 transition-colors"
+              className="inline-flex items-center px-6 py-3 border border-[var(--border-subtle)] text-[var(--text-primary)] text-xs font-mono font-medium tracking-widest uppercase rounded hover:bg-[var(--glass-bg)] transition-colors"
             >
               <ExternalLink className="w-4 h-4 mr-2" />
-              Live Demo
+              Live Demonstration
             </a>
           )}
         </div>
       </div>
 
-      <div className="glass-panel rounded-lg p-8 md:p-12 space-y-12">
+      <div className="glass-panel rounded-lg p-8 md:p-12 space-y-12 border border-[var(--border-subtle)]">
         
+        {/* Technologies Grid */}
         <div>
-          <h2 className="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">Technologies</h2>
+          <h2 className="text-xs font-mono tracking-widest text-[var(--text-meta)] uppercase mb-4 flex items-center">
+            <Cpu className="w-4 h-4 mr-2 text-green-500" />
+            TECHNOLOGY STACK
+          </h2>
           <div className="flex flex-wrap gap-2">
             {project.technologies.map((tech) => (
-              <span key={tech} className="px-3 py-1.5 text-sm bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.08)] rounded text-gray-300">
+              <span 
+                key={tech} 
+                className="px-3.5 py-1.5 text-xs font-mono bg-[var(--card-bg)] border border-[var(--border-subtle)] rounded text-[var(--text-primary)] font-medium"
+              >
                 {tech}
               </span>
             ))}
           </div>
         </div>
 
+        {/* Contribution */}
         {project.contribution && (
-          <div>
-            <h2 className="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">My Contribution</h2>
-            <p className="text-gray-300 leading-relaxed font-light">{project.contribution}</p>
-          </div>
-        )}
-        
-        {/* Placeholder for detailed case study sections. Data driven architecture allows adding these later. */}
-        {(!project.problem && !project.approach && !project.results) && (
-          <div className="pt-8 border-t border-[rgba(255,255,255,0.05)]">
-            <p className="text-gray-500 italic font-light">Detailed case study coming soon.</p>
+          <div className="border-t border-[var(--border-subtle)] pt-8">
+            <h2 className="text-xs font-mono tracking-widest text-[var(--text-meta)] uppercase mb-3 flex items-center">
+              <Award className="w-4 h-4 mr-2 text-amber-400" />
+              ROLE & CONTRIBUTION
+            </h2>
+            <p className="text-[var(--text-primary)] leading-relaxed font-light text-base md:text-lg">
+              {project.contribution}
+            </p>
           </div>
         )}
 
+        {/* Problem Statement */}
         {project.problem && (
-          <div>
-            <h2 className="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">The Problem</h2>
-            <p className="text-gray-300 leading-relaxed font-light">{project.problem}</p>
+          <div className="border-t border-[var(--border-subtle)] pt-8">
+            <h2 className="text-xs font-mono tracking-widest text-[var(--text-meta)] uppercase mb-3 flex items-center">
+              <FileText className="w-4 h-4 mr-2 text-blue-400" />
+              THE CHALLENGE
+            </h2>
+            <p className="text-[var(--text-secondary)] leading-relaxed font-light text-base md:text-lg">
+              {project.problem}
+            </p>
           </div>
         )}
         
+        {/* Engineering Approach */}
         {project.approach && (
-          <div>
-            <h2 className="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">Approach</h2>
-            <p className="text-gray-300 leading-relaxed font-light">{project.approach}</p>
+          <div className="border-t border-[var(--border-subtle)] pt-8">
+            <h2 className="text-xs font-mono tracking-widest text-[var(--text-meta)] uppercase mb-3 flex items-center">
+              <Layers className="w-4 h-4 mr-2 text-purple-400" />
+              METHODOLOGY & ARCHITECTURE
+            </h2>
+            <p className="text-[var(--text-secondary)] leading-relaxed font-light text-base md:text-lg">
+              {project.approach}
+            </p>
+          </div>
+        )}
+
+        {/* Results & Key Findings */}
+        {project.results && (
+          <div className="border-t border-[var(--border-subtle)] pt-8">
+            <h2 className="text-xs font-mono tracking-widest text-[var(--text-meta)] uppercase mb-3 flex items-center">
+              <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+              MEASURABLE RESULTS & FINDINGS
+            </h2>
+            <div className="p-6 bg-[var(--card-bg)] border border-[var(--border-subtle)] rounded-lg">
+              <p className="text-[var(--text-primary)] font-mono text-sm md:text-base leading-relaxed">
+                {project.results}
+              </p>
+            </div>
           </div>
         )}
 

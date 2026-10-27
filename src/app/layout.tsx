@@ -30,9 +30,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} h-full antialiased dark bg-[#0a0a0c]`}
+      className={`${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans transition-colors duration-1000">
+      <body className="min-h-full flex flex-col font-sans">
         <AppProvider>
           <IntroSequence />
           <Navbar />

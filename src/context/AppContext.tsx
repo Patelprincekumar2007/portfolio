@@ -16,8 +16,18 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [introFinished, setIntroFinished] = useState(false);
-  const [soundEnabled, setSoundEnabledState] = useState(false);
+  const [soundEnabled, setSoundEnabledState] = useState(true);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Read stored theme preference on initial mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("portfolio_theme");
+      if (stored === "light" || stored === "dark") {
+        setTheme(stored);
+      }
+    } catch (e) {}
+  }, []);
 
   const setSoundEnabled = (val: boolean) => {
     setSoundEnabledState(val);
@@ -28,20 +38,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const toggleTheme = () => {
-    // Physical transition trigger will happen via class manipulation in the components,
-    // this just manages the state string.
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      try {
+        localStorage.setItem("portfolio_theme", next);
+      } catch (e) {}
+      return next;
+    });
   };
 
+  // Sync theme to document element
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const root = document.documentElement;
       if (theme === "light") {
-        document.documentElement.classList.add("light");
+        root.classList.add("light");
+        root.classList.remove("dark");
       } else {
-        document.documentElement.classList.remove("light");
+        root.classList.add("dark");
+        root.classList.remove("light");
       }
     }
   }, [theme]);
+
+  // Audio Context unlock on first user gesture
+  useEffect(() => {
+    soundEngine.enabled = soundEnabled;
+    const unlockAudio = () => {
+      soundEngine.init();
+    };
+    window.addEventListener("click", unlockAudio, { once: true });
+    window.addEventListener("touchstart", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
+
+    return () => {
+      window.removeEventListener("click", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+    };
+  }, [soundEnabled]);
 
   return (
     <AppContext.Provider
@@ -54,7 +89,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         toggleTheme,
       }}
     >
-      <div className={`theme-transition-wrapper ${theme}`}>
+      <div className={`theme-transition-wrapper ${theme} w-full min-h-screen flex flex-col`}>
         {children}
       </div>
     </AppContext.Provider>

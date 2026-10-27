@@ -1,114 +1,149 @@
 export class SoundEngine {
   private ctx: AudioContext | null = null;
-  public enabled: boolean = false;
+  public enabled: boolean = true;
+  private scribbleBuffer: AudioBuffer | null = null;
+  private whooshBuffer: AudioBuffer | null = null;
 
   init() {
-    if (!this.ctx) {
-      this.ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (typeof window === "undefined") return;
+    try {
+      if (!this.ctx) {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioCtx) {
+          this.ctx = new AudioCtx();
+        }
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+    } catch (e) {
+      console.warn("Audio init warning:", e);
     }
   }
 
-  // Soft, realistic pencil/marker on paper
-  playScribble() {
-    if (!this.enabled || !this.ctx) return;
+  private getScribbleBuffer(): AudioBuffer | null {
+    if (this.scribbleBuffer) return this.scribbleBuffer;
+    if (!this.ctx) return null;
     const ctx = this.ctx;
-
-    const bufferSize = ctx.sampleRate * 2.0; 
+    const bufferSize = Math.floor(ctx.sampleRate * 2.0); 
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
-    // Create brown noise (softer than white noise)
-    let lastOut = 0;
+    
+    let b0 = 0, b1 = 0, b2 = 0;
     for (let i = 0; i < bufferSize; i++) {
       const white = Math.random() * 2 - 1;
-      data[i] = (lastOut + (0.02 * white)) / 1.02;
-      lastOut = data[i];
-      data[i] *= 3.5; // Compensate for gain
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.96900 * b2 + white * 0.1538520;
+      data[i] = (b0 + b1 + b2 + white * 0.1) * 0.5;
     }
-    
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-    
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 800; // Very soft, muffled paper friction
-    
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    
-    // Gentle rhythmic envelope for writing
-    gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1); 
-    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.3); 
-    gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.5); 
-    gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.8); 
-    gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 1.0); 
-    gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 1.3); 
-    gain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 1.5); 
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.8);
-    
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-    
-    noise.start(ctx.currentTime);
+    this.scribbleBuffer = buffer;
+    return buffer;
   }
 
-  // Air swoosh for large layout shifts (scroll triggers)
-  playWhoosh() {
-    if (!this.enabled || !this.ctx) return;
-    if (this.ctx.state === 'suspended') this.ctx.resume();
-    
+  // Soft, realistic pencil/marker on paper for signature
+  playScribble() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
     const ctx = this.ctx;
 
-    const bufferSize = ctx.sampleRate * 0.5; // 0.5 seconds
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1; 
-    }
-    
+    const buffer = this.getScribbleBuffer();
+    if (!buffer) return;
+
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
     
     const filter = ctx.createBiquadFilter();
     filter.type = "bandpass";
-    // Sweeping frequency from high to low for a "whoosh"
-    filter.frequency.setValueAtTime(1500, ctx.currentTime);
-    filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.4);
+    filter.frequency.value = 1200;
+    filter.Q.value = 1.2;
     
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.8, ctx.currentTime + 0.1); // Much louder (80%)
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+    
+    // Rhythm envelope simulating signature strokes
+    const now = ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(0.35, now + 0.15); 
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.35); 
+    gain.gain.linearRampToValueAtTime(0.42, now + 0.55); 
+    gain.gain.linearRampToValueAtTime(0.15, now + 0.85); 
+    gain.gain.linearRampToValueAtTime(0.48, now + 1.15); 
+    gain.gain.linearRampToValueAtTime(0.20, now + 1.45); 
+    gain.gain.linearRampToValueAtTime(0.55, now + 1.75); 
+    gain.gain.linearRampToValueAtTime(0, now + 2.0);
     
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
     
-    noise.start(ctx.currentTime);
+    try {
+      noise.start(now);
+    } catch (e) {}
   }
 
-  // Tiny UI tick for hovers or small reveals
+  // Air swoosh for transitions
+  playWhoosh() {
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+
+    if (!this.whooshBuffer) {
+      const bufferSize = Math.floor(ctx.sampleRate * 0.4);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1; 
+      }
+      this.whooshBuffer = buffer;
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = this.whooshBuffer;
+    
+    const filter = ctx.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(1400, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.35);
+    
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.08);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.38);
+    
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    
+    try {
+      noise.start(ctx.currentTime);
+    } catch (e) {}
+  }
+
+  // Mechanical tick for interactions
   playTick() {
-    if (!this.enabled || !this.ctx) return;
+    if (!this.enabled) return;
+    this.init();
+    if (!this.ctx) return;
     const ctx = this.ctx;
 
     const osc = ctx.createOscillator();
     osc.type = "triangle";
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.05);
+    osc.frequency.setValueAtTime(900, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(250, ctx.currentTime + 0.04);
     
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.8, ctx.currentTime + 0.01); // 80% volume for clear mechanical click
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.05);
+    gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.008);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.04);
     
     osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.05);
+    try {
+      osc.start();
+      osc.stop(ctx.currentTime + 0.04);
+    } catch (e) {}
   }
 }
 

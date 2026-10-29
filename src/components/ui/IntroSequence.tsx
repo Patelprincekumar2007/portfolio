@@ -49,11 +49,11 @@ export default function IntroSequence() {
     if (signatureStartedRef.current) return;
     signatureStartedRef.current = true;
 
-    // Trigger audio only if sound is enabled
+    // Trigger signature audio when "patelprince" signature draws
     if (soundEnabled) {
       try {
         soundEngine.init();
-        soundEngine.playScribble();
+        soundEngine.playSignatureSound();
       } catch {
         // Safe fallback - silent
       }
@@ -125,19 +125,10 @@ export default function IntroSequence() {
     return () => clearInterval(interval);
   }, [introFinished, pathname, startSignature]);
 
-  // Instant skip on click/tap/keypress
+  // Instant skip on click/tap/keypress - silent entry
   const handleSkipOrClick = useCallback(() => {
     if (isSkippingRef.current) return;
     isSkippingRef.current = true;
-
-    if (soundEnabled) {
-      try {
-        soundEngine.init();
-        soundEngine.playTick();
-      } catch {
-        // Safe fallback - silent
-      }
-    }
 
     if (containerRef.current) {
       try {
@@ -155,7 +146,7 @@ export default function IntroSequence() {
     } else {
       setIntroFinished(true);
     }
-  }, [setIntroFinished, soundEnabled]);
+  }, [setIntroFinished]);
 
   // Keyboard accessibility: Escape, Space, Enter to skip
   useEffect(() => {

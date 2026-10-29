@@ -45,47 +45,105 @@ export class SoundEngine {
     return buffer;
   }
 
-  // Soft, realistic pencil/marker on paper for signature
-  playScribble() {
+  // Crisp, tactile fountain pen signature sound for "patelprince" signature drawing
+  playSignatureSound() {
     if (!this.enabled) return;
     this.init();
     if (!this.ctx) return;
     const ctx = this.ctx;
 
-    const buffer = this.getScribbleBuffer();
-    if (!buffer) return;
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+
+    const duration = 2.0;
+    const bufferSize = Math.floor(ctx.sampleRate * duration);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    // Textured pink/white paper friction noise
+    let b0 = 0,
+      b1 = 0,
+      b2 = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + white * 0.0555179;
+      b1 = 0.99332 * b1 + white * 0.0750759;
+      b2 = 0.969 * b2 + white * 0.153852;
+      data[i] = (b0 + b1 + b2 + white * 0.25) * 0.7;
+    }
 
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
 
+    // Resonant bandpass filter tuned to audible pen nib friction
     const filter = ctx.createBiquadFilter();
     filter.type = "bandpass";
-    filter.frequency.value = 1200;
-    filter.Q.value = 1.2;
+    filter.frequency.setValueAtTime(2400, ctx.currentTime);
+    filter.Q.setValueAtTime(1.6, ctx.currentTime);
 
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
 
-    // Rhythm envelope simulating signature strokes
     const now = ctx.currentTime;
-    gain.gain.linearRampToValueAtTime(0.35, now + 0.15);
-    gain.gain.linearRampToValueAtTime(0.12, now + 0.35);
-    gain.gain.linearRampToValueAtTime(0.42, now + 0.55);
-    gain.gain.linearRampToValueAtTime(0.15, now + 0.85);
-    gain.gain.linearRampToValueAtTime(0.48, now + 1.15);
-    gain.gain.linearRampToValueAtTime(0.2, now + 1.45);
-    gain.gain.linearRampToValueAtTime(0.55, now + 1.75);
-    gain.gain.linearRampToValueAtTime(0, now + 2.0);
+
+    // Rhythm envelope simulating "Patel" + "Prince" + sharp underline flourish
+    // 1. "Patel" loops (0.05s - 0.7s)
+    gain.gain.linearRampToValueAtTime(0.5, now + 0.08);
+    gain.gain.linearRampToValueAtTime(0.2, now + 0.22);
+    gain.gain.linearRampToValueAtTime(0.55, now + 0.38);
+    gain.gain.linearRampToValueAtTime(0.22, now + 0.52);
+    gain.gain.linearRampToValueAtTime(0.58, now + 0.65);
+    gain.gain.linearRampToValueAtTime(0.06, now + 0.75); // Pen lift between names
+
+    // 2. "Prince" loops (0.8s - 1.4s)
+    filter.frequency.setValueAtTime(2700, now + 0.8);
+    gain.gain.linearRampToValueAtTime(0.55, now + 0.88);
+    gain.gain.linearRampToValueAtTime(0.2, now + 1.02);
+    gain.gain.linearRampToValueAtTime(0.6, now + 1.18);
+    gain.gain.linearRampToValueAtTime(0.18, now + 1.32);
+    gain.gain.linearRampToValueAtTime(0.04, now + 1.42); // Pen lift before slash
+
+    // 3. Sharp underline slash (1.45s - 1.85s)
+    filter.frequency.exponentialRampToValueAtTime(1800, now + 1.75);
+    gain.gain.linearRampToValueAtTime(0.7, now + 1.55);
+    gain.gain.linearRampToValueAtTime(0, now + 1.85);
 
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
+    // Subtle paper pressure sub-tone to give tactile pen-to-paper depth
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(180, now + 1.8);
+
+    const oscGain = ctx.createGain();
+    oscGain.gain.setValueAtTime(0, now);
+    oscGain.gain.linearRampToValueAtTime(0.08, now + 0.1);
+    oscGain.gain.linearRampToValueAtTime(0.02, now + 0.7);
+    oscGain.gain.linearRampToValueAtTime(0.08, now + 0.9);
+    oscGain.gain.linearRampToValueAtTime(0.02, now + 1.4);
+    oscGain.gain.linearRampToValueAtTime(0.1, now + 1.55);
+    oscGain.gain.linearRampToValueAtTime(0, now + 1.85);
+
+    osc.connect(oscGain);
+    oscGain.connect(ctx.destination);
+
     try {
       noise.start(now);
+      noise.stop(now + 1.9);
+      osc.start(now);
+      osc.stop(now + 1.9);
     } catch {
       // safe fallback
     }
+  }
+
+  // Alias for backward compatibility
+  playScribble() {
+    this.playSignatureSound();
   }
 
   // Air swoosh for transitions

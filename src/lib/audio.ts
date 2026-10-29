@@ -45,6 +45,31 @@ export class SoundEngine {
     return buffer;
   }
 
+  // Helper for crisp signature pen stroke accents ("us aavz ko")
+  private triggerStrokeTick(time: number, freqStart = 880, freqEnd = 260, volume = 0.35) {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    try {
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freqStart, time);
+      osc.frequency.exponentialRampToValueAtTime(freqEnd, time + 0.035);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(volume, time + 0.006);
+      gain.gain.linearRampToValueAtTime(0, time + 0.035);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + 0.04);
+    } catch {
+      // safe fallback
+    }
+  }
+
   // Crisp, tactile fountain pen signature sound for "patelprince" signature drawing
   playSignatureSound() {
     if (!this.enabled) return;
@@ -56,12 +81,32 @@ export class SoundEngine {
       ctx.resume().catch(() => {});
     }
 
-    const duration = 2.0;
+    const now = ctx.currentTime;
+
+    // 1. Rhythmic tactile stroke accents ("us aavz ko" matching the pen paths of "Patel" and "Prince")
+    // "Patel" letter loops
+    this.triggerStrokeTick(now + 0.06, 920, 280, 0.45);
+    this.triggerStrokeTick(now + 0.20, 860, 250, 0.35);
+    this.triggerStrokeTick(now + 0.34, 940, 290, 0.4);
+    this.triggerStrokeTick(now + 0.48, 880, 260, 0.35);
+    this.triggerStrokeTick(now + 0.62, 820, 240, 0.4);
+
+    // "Prince" letter loops
+    this.triggerStrokeTick(now + 0.78, 930, 290, 0.45);
+    this.triggerStrokeTick(now + 0.92, 870, 260, 0.35);
+    this.triggerStrokeTick(now + 1.06, 950, 300, 0.4);
+    this.triggerStrokeTick(now + 1.20, 890, 270, 0.35);
+    this.triggerStrokeTick(now + 1.32, 830, 240, 0.4);
+
+    // Final flourish underline slash
+    this.triggerStrokeTick(now + 1.48, 1050, 320, 0.5);
+
+    // 2. Textured paper friction noise underneath
+    const duration = 1.9;
     const bufferSize = Math.floor(ctx.sampleRate * duration);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
 
-    // Textured pink/white paper friction noise
     let b0 = 0,
       b1 = 0,
       b2 = 0;
@@ -76,66 +121,37 @@ export class SoundEngine {
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
 
-    // Resonant bandpass filter tuned to audible pen nib friction
     const filter = ctx.createBiquadFilter();
     filter.type = "bandpass";
-    filter.frequency.setValueAtTime(2400, ctx.currentTime);
-    filter.Q.setValueAtTime(1.6, ctx.currentTime);
+    filter.frequency.setValueAtTime(2400, now);
+    filter.Q.setValueAtTime(1.6, now);
 
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.setValueAtTime(0, now);
 
-    const now = ctx.currentTime;
+    gain.gain.linearRampToValueAtTime(0.4, now + 0.08);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.22);
+    gain.gain.linearRampToValueAtTime(0.45, now + 0.38);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.52);
+    gain.gain.linearRampToValueAtTime(0.48, now + 0.65);
+    gain.gain.linearRampToValueAtTime(0.05, now + 0.74);
 
-    // Rhythm envelope simulating "Patel" + "Prince" + sharp underline flourish
-    // 1. "Patel" loops (0.05s - 0.7s)
-    gain.gain.linearRampToValueAtTime(0.5, now + 0.08);
-    gain.gain.linearRampToValueAtTime(0.2, now + 0.22);
-    gain.gain.linearRampToValueAtTime(0.55, now + 0.38);
-    gain.gain.linearRampToValueAtTime(0.22, now + 0.52);
-    gain.gain.linearRampToValueAtTime(0.58, now + 0.65);
-    gain.gain.linearRampToValueAtTime(0.06, now + 0.75); // Pen lift between names
+    gain.gain.linearRampToValueAtTime(0.45, now + 0.84);
+    gain.gain.linearRampToValueAtTime(0.18, now + 1.0);
+    gain.gain.linearRampToValueAtTime(0.5, now + 1.15);
+    gain.gain.linearRampToValueAtTime(0.15, now + 1.3);
+    gain.gain.linearRampToValueAtTime(0.04, now + 1.4);
 
-    // 2. "Prince" loops (0.8s - 1.4s)
-    filter.frequency.setValueAtTime(2700, now + 0.8);
-    gain.gain.linearRampToValueAtTime(0.55, now + 0.88);
-    gain.gain.linearRampToValueAtTime(0.2, now + 1.02);
-    gain.gain.linearRampToValueAtTime(0.6, now + 1.18);
-    gain.gain.linearRampToValueAtTime(0.18, now + 1.32);
-    gain.gain.linearRampToValueAtTime(0.04, now + 1.42); // Pen lift before slash
-
-    // 3. Sharp underline slash (1.45s - 1.85s)
-    filter.frequency.exponentialRampToValueAtTime(1800, now + 1.75);
-    gain.gain.linearRampToValueAtTime(0.7, now + 1.55);
+    gain.gain.linearRampToValueAtTime(0.6, now + 1.52);
     gain.gain.linearRampToValueAtTime(0, now + 1.85);
 
     noise.connect(filter);
     filter.connect(gain);
     gain.connect(ctx.destination);
 
-    // Subtle paper pressure sub-tone to give tactile pen-to-paper depth
-    const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(440, now);
-    osc.frequency.exponentialRampToValueAtTime(180, now + 1.8);
-
-    const oscGain = ctx.createGain();
-    oscGain.gain.setValueAtTime(0, now);
-    oscGain.gain.linearRampToValueAtTime(0.08, now + 0.1);
-    oscGain.gain.linearRampToValueAtTime(0.02, now + 0.7);
-    oscGain.gain.linearRampToValueAtTime(0.08, now + 0.9);
-    oscGain.gain.linearRampToValueAtTime(0.02, now + 1.4);
-    oscGain.gain.linearRampToValueAtTime(0.1, now + 1.55);
-    oscGain.gain.linearRampToValueAtTime(0, now + 1.85);
-
-    osc.connect(oscGain);
-    oscGain.connect(ctx.destination);
-
     try {
       noise.start(now);
-      noise.stop(now + 1.9);
-      osc.start(now);
-      osc.stop(now + 1.9);
+      noise.stop(now + 1.88);
     } catch {
       // safe fallback
     }

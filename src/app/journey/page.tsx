@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { Briefcase, Trophy, Calendar, CheckCircle2 } from "lucide-react";
+import { Calendar, CheckCircle2 } from "lucide-react";
 
 const MILESTONES = [
   {
@@ -68,7 +68,7 @@ export default function JourneyPage() {
       </div>
 
       <div className="relative border-l border-[var(--border-subtle)] ml-4 md:ml-8 pl-8 md:pl-16 space-y-20">
-        {MILESTONES.map((item, idx) => (
+        {MILESTONES.map((item) => (
           <div key={item.role} className="relative group">
             {/* Timeline Bullet */}
             <div className="absolute -left-[41px] md:-left-[73px] top-1.5 w-4 h-4 rounded-full bg-[var(--bg-primary)] border-2 border-[var(--text-primary)] group-hover:scale-125 transition-transform duration-300"></div>

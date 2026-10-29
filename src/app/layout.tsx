@@ -12,6 +12,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://patelprince.xyz"),
   title: "Patel Prince | Data Science & Analytics",
   description: "Data Science & Analytics student building practical projects across data analysis, machine learning and AI.",
   keywords: ["Data Science", "Analytics", "Machine Learning", "AI", "Patel Prince", "Portfolio"],
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
     title: "Patel Prince | Data Science & Analytics",
     description: "Data Science & Analytics student building practical projects across data analysis, machine learning and AI.",
     type: "website",
+    url: "https://patelprince.xyz",
   },
 };
 

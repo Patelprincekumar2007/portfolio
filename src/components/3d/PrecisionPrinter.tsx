@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text, PerspectiveCamera, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
@@ -37,7 +37,6 @@ export default function PrecisionPrinter({ printState, onComplete, isMobile, red
   const laserBeamRef = useRef<THREE.MeshBasicMaterial>(null);
   
   const clockStartRef = useRef<number | null>(null);
-  const [printProgress, setPrintProgress] = useState(0);
 
   // Section refs for smooth 60fps real-time emergence without React re-render overhead
   const sec0Ref = useRef<THREE.Group>(null);
@@ -57,13 +56,11 @@ export default function PrecisionPrinter({ printState, onComplete, isMobile, red
   useEffect(() => {
     if (printState === "idle") {
       clockStartRef.current = null;
-      setPrintProgress(0);
       if (paperRef.current) {
         paperRef.current.position.z = PAPER_START_Z;
       }
       updateSections(PAPER_START_Z, false);
     } else if (printState === "complete") {
-      setPrintProgress(1);
       if (paperRef.current) {
         paperRef.current.position.z = PAPER_END_Z;
       }
@@ -122,7 +119,6 @@ export default function PrecisionPrinter({ printState, onComplete, isMobile, red
           paperRef.current.position.z = PAPER_START_Z;
         }
         updateSections(PAPER_START_Z, false);
-        setPrintProgress(0);
       } else if (elapsed < 7.0) {
         // Phase 2 (1.0s - 7.0s, duration 6.0s):
         // Real-time printing! As paper exits the slot, text is printed directly onto it!
@@ -136,9 +132,6 @@ export default function PrecisionPrinter({ printState, onComplete, isMobile, red
 
         // Live update each section as it clears the slot opening
         updateSections(currentZ, false);
-
-        // Live print progress reveals text lines in sync
-        setPrintProgress(progress);
 
         // Print head carriage sweeps back and forth rapidly across the slot
         if (printHeadRef.current) {
@@ -162,7 +155,6 @@ export default function PrecisionPrinter({ printState, onComplete, isMobile, red
           paperRef.current.position.z = PAPER_END_Z;
         }
         updateSections(PAPER_END_Z, true);
-        setPrintProgress(1);
       } else {
         // Phase 4 (8.0s): Print job finished in exact sync with audio
         camTargetPos.set(isMobile ? 0 : 1.6, 1.7, 3.6);
@@ -171,7 +163,6 @@ export default function PrecisionPrinter({ printState, onComplete, isMobile, red
           paperRef.current.position.z = PAPER_END_Z;
         }
         updateSections(PAPER_END_Z, true);
-        setPrintProgress(1);
         onComplete();
       }
 
@@ -200,9 +191,6 @@ export default function PrecisionPrinter({ printState, onComplete, isMobile, red
     roughness: 0.4,
     metalness: 0.5,
   });
-
-  // Calculate dynamic text clip height based on print progress (from top 0 to bottom -1.65)
-  const clippedHeight = -(Math.min(printProgress * 1.05, 1.0) * 1.65);
 
   return (
     <>

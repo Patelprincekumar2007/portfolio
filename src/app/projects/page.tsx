@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowUpRight, BookOpen, Code } from "lucide-react";
+import { ArrowUpRight, BookOpen } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import CodePilotVisual from "@/components/ui/CodePilotVisual";
@@ -23,9 +23,9 @@ export default function ProjectsPage() {
     
     if (!containerRef.current) return;
     
-    const chapters = gsap.utils.toArray('.project-chapter');
+    const chapters = gsap.utils.toArray<HTMLElement>('.project-chapter');
     
-    chapters.forEach((chapter: any) => {
+    chapters.forEach((chapter) => {
       gsap.fromTo(chapter, 
         { y: 80, opacity: 0 },
         { 

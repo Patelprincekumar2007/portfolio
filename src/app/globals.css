@@ -12,6 +12,7 @@
   --text-primary: #f5f5f5;
   --text-secondary: #a0a0a5;
   --text-meta: #6e6e73;
+  --card-bg: rgba(255, 255, 255, 0.04);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -26,6 +27,7 @@ html.light, .light {
   --text-primary: #111113;
   --text-secondary: #48484e;
   --text-meta: #787880;
+  --card-bg: rgba(0, 0, 0, 0.04);
   --border-subtle: rgba(0, 0, 0, 0.08);
   --glass-bg: rgba(0, 0, 0, 0.02);
   --glass-border: rgba(0, 0, 0, 0.08);

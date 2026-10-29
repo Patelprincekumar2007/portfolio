@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, ContactShadows, MeshTransmissionMaterial, Text } from "@react-three/drei";
+import { MeshTransmissionMaterial, Text } from "@react-three/drei";
 import * as THREE from "three";
 
 interface PrinterProps {
@@ -27,8 +27,11 @@ export default function Printer({ isPrinting, onComplete, isMobile }: PrinterPro
 
   useEffect(() => {
     if (isPrinting && status === "idle") {
-      setStatus("startup");
-      setStartTime(performance.now() / 1000);
+      const timer = setTimeout(() => {
+        setStatus("startup");
+        setStartTime(performance.now() / 1000);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isPrinting, status]);
 

@@ -17,17 +17,19 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [introFinished, setIntroFinished] = useState(false);
   const [soundEnabled, setSoundEnabledState] = useState(true);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-  // Read stored theme preference on initial mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("portfolio_theme");
-      if (stored === "light" || stored === "dark") {
-        setTheme(stored);
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("portfolio_theme");
+        if (stored === "light" || stored === "dark") {
+          return stored;
+        }
+      } catch {
+        // Fallback to dark
       }
-    } catch (e) {}
-  }, []);
+    }
+    return "dark";
+  });
 
   const setSoundEnabled = (val: boolean) => {
     setSoundEnabledState(val);
@@ -42,7 +44,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const next = prev === "dark" ? "light" : "dark";
       try {
         localStorage.setItem("portfolio_theme", next);
-      } catch (e) {}
+      } catch {
+        // ignore
+      }
       return next;
     });
   };

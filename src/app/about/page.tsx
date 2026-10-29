@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { GraduationCap, Brain, Terminal, Database, Award, ArrowUpRight } from "lucide-react";
+import { GraduationCap, Terminal, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 const SKILLS = [

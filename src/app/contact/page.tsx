@@ -36,7 +36,7 @@ export default function ContactPage() {
         <div>
           <p className="text-xs font-mono tracking-[0.3em] uppercase text-[var(--text-meta)] mb-3">GET IN TOUCH</p>
           <h1 className="text-[12vw] md:text-[8vw] font-bold tracking-tighter uppercase leading-[0.8] text-[var(--text-primary)] hover-expand">
-            LET'S BUILD<br/>SOMETHING.
+            LET&apos;S BUILD<br/>SOMETHING.
           </h1>
         </div>
         

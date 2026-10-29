@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Database, LineChart, Activity, Sliders, RefreshCw, Cpu, Layers } from "lucide-react";
+import { Database, LineChart, Activity, Sliders } from "lucide-react";
 
 export default function DataLabPage() {
   // Interactive model tuning simulator

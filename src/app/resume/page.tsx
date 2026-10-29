@@ -10,25 +10,29 @@ type PrintState = "idle" | "printing" | "complete";
 
 export default function ResumeChamberPage() {
   const [printState, setPrintState] = useState<PrintState>("idle");
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isPdfAvailable, setIsPdfAvailable] = useState<boolean>(true);
-  
+  const [reducedMotion, setReducedMotion] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+    return false;
+  });
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mediaQuery.matches);
-    setIsMobile(window.innerWidth < 768);
-
     const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleMotionChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+
     window.addEventListener("resize", handleResize);
-    
-    // Check if PDF actually exists
-    fetch("/resume/patel-prince-resume.pdf")
-      .then(res => setIsPdfAvailable(res.ok))
-      .catch(() => setIsPdfAvailable(true)); // Fallback to true since file is present
-      
+    mediaQuery.addEventListener("change", handleMotionChange);
+
     // Preload audio and link ended event
     const audio = new Audio("/audio/printer.mp3");
     audio.preload = "auto";
@@ -36,6 +40,7 @@ export default function ResumeChamberPage() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      mediaQuery.removeEventListener("change", handleMotionChange);
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -47,15 +52,13 @@ export default function ResumeChamberPage() {
     if (!audioRef.current) return;
     try {
       audioRef.current.currentTime = 0;
-      audioRef.current.play().catch(e => {
-        console.warn("Audio autoplay blocked by browser:", e);
-      });
+      audioRef.current.play().catch(() => {});
       // Synchronize exact completion to audio ending as well
       audioRef.current.onended = () => {
         handleComplete();
       };
-    } catch (e) {
-      console.warn("Audio playback failed", e);
+    } catch {
+      // Audio playback fallback
     }
   };
 

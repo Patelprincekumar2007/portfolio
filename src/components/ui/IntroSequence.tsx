@@ -4,14 +4,12 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { useApp } from "@/context/AppContext";
-import { soundEngine } from "@/lib/audio";
-import { Volume2, VolumeX, FastForward, ArrowRight } from "lucide-react";
+import { FastForward } from "lucide-react";
 
 export default function IntroSequence() {
   const pathname = usePathname();
-  const { introFinished, setIntroFinished, soundEnabled } = useApp();
+  const { introFinished, setIntroFinished } = useApp();
   const [progress, setProgress] = useState(0);
-  const [readyToEnter, setReadyToEnter] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -35,22 +33,12 @@ export default function IntroSequence() {
     }
   }, [introFinished, setIntroFinished]);
 
-  // Draw signature animation with crisp signature stroke audio
+  // Draw signature animation (silent, smooth entry without audio)
   const handleStartSignature = useCallback(() => {
     if (signatureStartedRef.current || isSkippingRef.current) return;
     signatureStartedRef.current = true;
 
-    // 1. Initialize and resume audio inside this user gesture (100% unlocked)
-    if (soundEnabled) {
-      try {
-        soundEngine.init();
-        soundEngine.playSignatureSound();
-      } catch {
-        // Safe fallback - silent
-      }
-    }
-
-    // 2. Animate loader fade and signature drawing
+    // Animate loader fade and signature drawing
     try {
       const tl = gsap.timeline({
         onComplete: () => {
@@ -70,7 +58,7 @@ export default function IntroSequence() {
           { strokeDasharray: 1000, strokeDashoffset: 1000 },
           {
             strokeDashoffset: 0,
-            duration: 1.3,
+            duration: 1.2,
             ease: "power2.inOut",
             stagger: 0.15,
           }
@@ -95,38 +83,7 @@ export default function IntroSequence() {
       // If GSAP fails for any reason, finish immediately
       setIntroFinished(true);
     }
-  }, [setIntroFinished, soundEnabled]);
-
-  // Fast, responsive loading progression (0-100% in ~400ms)
-  useEffect(() => {
-    if (introFinished || pathname !== "/") return;
-
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += Math.floor(Math.random() * 25) + 15;
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-        setProgress(100);
-        setReadyToEnter(true);
-      } else {
-        setProgress(currentProgress);
-      }
-    }, 45);
-
-    return () => clearInterval(interval);
-  }, [introFinished, pathname]);
-
-  // Auto-start signature after 1.6s if user doesn't click
-  useEffect(() => {
-    if (!readyToEnter || signatureStartedRef.current || introFinished || pathname !== "/") return;
-
-    const autoStartTimer = setTimeout(() => {
-      handleStartSignature();
-    }, 1600);
-
-    return () => clearTimeout(autoStartTimer);
-  }, [readyToEnter, introFinished, pathname, handleStartSignature]);
+  }, [setIntroFinished]);
 
   // Instant skip for ESC or skip button (silent)
   const handleInstantSkip = useCallback(() => {
@@ -151,14 +108,34 @@ export default function IntroSequence() {
     }
   }, [setIntroFinished]);
 
-  // Click on screen: start signature with sound (no tick sound on click itself)
+  // Fast, responsive loading progression (0-100% in ~400ms)
+  useEffect(() => {
+    if (introFinished || pathname !== "/") return;
+
+    let currentProgress = 0;
+    const interval = setInterval(() => {
+      currentProgress += Math.floor(Math.random() * 25) + 15;
+      if (currentProgress >= 100) {
+        currentProgress = 100;
+        clearInterval(interval);
+        setProgress(100);
+        handleStartSignature();
+      } else {
+        setProgress(currentProgress);
+      }
+    }, 45);
+
+    return () => clearInterval(interval);
+  }, [introFinished, pathname, handleStartSignature]);
+
+  // Click on screen: start signature immediately (silent)
   const handleScreenClick = useCallback(() => {
     if (!signatureStartedRef.current) {
       handleStartSignature();
     }
   }, [handleStartSignature]);
 
-  // Keyboard accessibility: Escape to skip immediately, Enter / Space to enter
+  // Keyboard accessibility: Escape to skip immediately, Enter / Space to advance
   useEffect(() => {
     if (introFinished || pathname !== "/") return;
 
@@ -182,7 +159,7 @@ export default function IntroSequence() {
 
     const safetyTimer = setTimeout(() => {
       setIntroFinished(true);
-    }, 5500);
+    }, 4500);
 
     return () => clearTimeout(safetyTimer);
   }, [introFinished, pathname, setIntroFinished]);
@@ -194,7 +171,7 @@ export default function IntroSequence() {
       ref={containerRef}
       role="button"
       tabIndex={0}
-      aria-label="Enter portfolio or skip intro"
+      aria-label="Skip intro and enter portfolio"
       onClick={handleScreenClick}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -204,21 +181,8 @@ export default function IntroSequence() {
       }}
       className="fixed inset-0 z-[9999] bg-[#0a0a0c] text-[#f5f5f5] flex flex-col items-center justify-center overflow-hidden font-sans cursor-pointer select-none will-change-[opacity]"
     >
-      {/* Sound indicator and Skip Hint */}
-      <div className="absolute top-8 inset-x-8 flex items-center justify-between text-[10px] font-mono tracking-widest text-[#777] uppercase">
-        <div className="flex items-center space-x-2 pointer-events-none">
-          {soundEnabled ? (
-            <>
-              <Volume2 className="w-3.5 h-3.5 text-green-500" />
-              <span>AUDIO READY</span>
-            </>
-          ) : (
-            <>
-              <VolumeX className="w-3.5 h-3.5 text-[#666]" />
-              <span>AUDIO MUTED</span>
-            </>
-          )}
-        </div>
+      {/* Skip Hint */}
+      <div className="absolute top-8 right-8 flex items-center text-[10px] font-mono tracking-widest text-[#777] uppercase">
         <button
           type="button"
           onClick={(e) => {
@@ -232,7 +196,7 @@ export default function IntroSequence() {
         </button>
       </div>
 
-      {/* 1. Loader & Enter Action */}
+      {/* 1. Loader */}
       <div className="intro-loader flex flex-col items-center text-center absolute px-6 will-change-[opacity]">
         <p className="text-[10px] font-mono tracking-[0.3em] text-[#666] mb-3 uppercase">
           INITIALIZING ARCHITECTURE
@@ -244,29 +208,12 @@ export default function IntroSequence() {
           DATA SCIENCE & ANALYTICS
         </p>
 
-        {!readyToEnter ? (
-          <p className="text-5xl font-light mt-6 font-mono tracking-tighter text-white">
-            {progress}%
-          </p>
-        ) : (
-          <button
-            type="button"
-            id="intro-enter-portfolio-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleStartSignature();
-            }}
-            className="mt-6 group relative inline-flex items-center justify-center px-8 py-3.5 border border-white/30 hover:border-white text-xs font-mono tracking-[0.25em] uppercase text-white transition-all overflow-hidden bg-white/5 hover:bg-white hover:text-black cursor-pointer shadow-lg active:scale-95"
-          >
-            <span className="relative z-10 flex items-center">
-              ENTER PORTFOLIO
-              <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </button>
-        )}
+        <p className="text-5xl font-light mt-6 font-mono tracking-tighter text-white">
+          {progress}%
+        </p>
 
         <p className="text-[10px] font-mono tracking-widest text-[#666] mt-4 uppercase">
-          {readyToEnter ? "CLICK TO SIGN & ENTER" : "CALIBRATING MODELS..."}
+          CALIBRATING MODELS...
         </p>
       </div>
 

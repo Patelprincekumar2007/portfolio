@@ -20,8 +20,8 @@ export default function Navbar() {
   const { introFinished, theme, toggleTheme, soundEnabled, setSoundEnabled } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // On home page, wait for intro to finish. On sub-pages, always show.
-  if (pathname === "/" && !introFinished) return null;
+  // Hide Navbar on landing page (/). It only shows after entering the portfolio (/projects, /about, etc.).
+  if (pathname === "/") return null;
   if (pathname === "/resume") return null;
 
   return (

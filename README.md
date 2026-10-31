@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Patel Prince — Portfolio v2
 
-## Getting Started
+Multi-page animated portfolio. Dark editorial "ink & paper" theme with a 3D
+print station that prints the actual resume.
 
-First, run the development server:
+## Stack
+- Next.js 16 (App Router) + React 19 + TypeScript
+- Tailwind CSS for styling
+- React Three Fiber + Drei (3D hero data-sphere, 3D printer)
+- GSAP + ScrollTrigger (preloader, hero intro, scroll reveals)
 
+## Pages
+- `/` — hero with particle data-sphere, featured work, about teaser, CV call-to-action
+- `/projects` — all five projects with tags and links
+- `/about` — bio, academics, technical arsenal
+- `/journey` — experience timeline
+- `/cv` — the Print Station: click PRINT MY CV, the printer spins up with real
+  mechanical audio and a paper sheet carrying the resume emerges in 3D, then
+  Preview / Download / Print again. Skip and Mute while printing.
+
+## Run it
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production:
+```bash
+npm run build
+npm start
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Requires Node.js 20+ (built and verified on Node 22). Everything (fonts, sound, PDF) is bundled —
+no CDN needed at runtime.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Edit content
+- All text, projects, journey entries, skills, links: `lib/content.ts`
+- Colors: `tailwind.config.ts` (`ink`, `paper`, `accent`) and `app/globals.css`
+- The resume PDF: replace `public/cv/Patel_Princekumar_Resume.pdf`
+- The paper texture in the 3D printer: replace `public/cv/resume-preview-1.png`
+  (a render of the resume's first page — regenerate after changing the PDF)
+- Printer sound: replace `public/sounds/printer.mp3`
 
-## Learn More
+## Deploy
+Any Node host (Vercel recommended: import repo, zero config). Do not forget to
+keep `public/` intact — the CV PDF and sound live there.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Accessibility
+- `prefers-reduced-motion`: preloader and reveals are skipped; the print
+  completes instantly without animation.
+- 3D scenes are decorative; all content is available as text.

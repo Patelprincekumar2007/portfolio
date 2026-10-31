@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0d0d12;
+  --paper: #f3ede3;
+  --accent: #ff5a1f;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-space), sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+/* film grain overlay */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* faint blueprint grid */
+.gridlines {
+  background-image:
+    linear-gradient(rgba(243, 237, 227, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(243, 237, 227, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.outline-text {
+  -webkit-text-stroke: 1.5px rgba(243, 237, 227, 0.8);
+  color: transparent;
+}
+
+.hero-copy {
+  text-shadow: 0 2px 18px rgba(13, 13, 18, 0.95), 0 0 6px rgba(13, 13, 18, 0.9);
+}
+
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.35s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.link-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.project-row {
+  transition: background 0.4s ease, padding 0.4s ease;
+}
+.project-row:hover {
+  background: rgba(243, 237, 227, 0.04);
+}
+.project-row .arrow {
+  transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.4s;
+  opacity: 0.35;
+}
+.project-row:hover .arrow {
+  transform: translate(6px, -6px);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-marquee {
+    animation: none;
+  }
+}
